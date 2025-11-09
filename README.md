@@ -1,0 +1,1 @@
+# setup-laravel-inertia-react.js
