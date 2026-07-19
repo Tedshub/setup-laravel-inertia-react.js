@@ -54,6 +54,8 @@ php artisan breeze:install react
 
 > Secara default Breeze terbaru menggunakan **React + TypeScript**.
 
+> ⚠️ **Catatan penting:** Perintah `breeze:install` otomatis menjalankan `npm install` di baliknya. Jika Node dependency-nya bentrok (lihat bagian **Troubleshooting** di bawah), instalasi npm akan **gagal** meski Artisan tetap menampilkan pesan `Breeze scaffolding installed successfully`. Pesan itu hanya berarti file-file Breeze (PHP, blade/react, route) berhasil ditulis — bukan berarti `node_modules` sudah terpasang. Selalu lanjutkan ke langkah **Install Dependency** di bawah dan pastikan `npm install` benar-benar sukses sebelum lanjut.
+
 ---
 
 # 📦 Install Dependency
@@ -61,6 +63,47 @@ php artisan breeze:install react
 ```powershell
 npm install
 ```
+
+## 🛠️ Troubleshooting: `npm error ERESOLVE unable to resolve dependency tree`
+
+Jika muncul error seperti ini:
+
+```
+npm error ERESOLVE unable to resolve dependency tree
+npm error Found: vite@8.1.5
+npm error Could not resolve dependency:
+npm error peer vite@"^4.2.0 || ^5.0.0 || ^6.0.0 || ^7.0.0" from @vitejs/plugin-react@4.7.0
+```
+
+**Penyebab:** `composer create-project` / Breeze menghasilkan `package.json` yang mengizinkan `vite@^8.0.0`, padahal `@vitejs/plugin-react@4.7.0` (yang dipakai Breeze untuk React) baru mendukung `vite` sampai versi 7. Vite 8 dirilis lebih baru daripada dependency Breeze yang ada, sehingga terjadi bentrok versi (peer dependency conflict).
+
+Ada dua cara mengatasinya — pilih salah satu:
+
+### Opsi A (disarankan): Turunkan versi Vite ke yang didukung
+
+Buka `package.json`, cari baris `"vite"`, lalu ubah menjadi versi yang kompatibel, misalnya:
+
+```json
+"vite": "^6.0.0"
+```
+
+Kemudian hapus lock file lama dan install ulang:
+
+```powershell
+Remove-Item package-lock.json -ErrorAction SilentlyContinue
+Remove-Item node_modules -Recurse -Force -ErrorAction SilentlyContinue
+npm install
+```
+
+### Opsi B (cepat, tapi kurang aman): Paksa install dengan `--legacy-peer-deps`
+
+```powershell
+npm install --legacy-peer-deps
+```
+
+Cara ini melewati pengecekan peer dependency, jadi instalasi tetap jalan meski versinya secara teknis belum "resmi" kompatibel. Cukup aman untuk kebutuhan development, tapi Opsi A lebih direkomendasikan untuk stabilitas jangka panjang.
+
+> 💡 Setelah salah satu opsi di atas berhasil, jalankan `npm run dev` untuk memastikan Vite benar-benar bisa start tanpa error.
 
 ---
 
@@ -222,6 +265,8 @@ Frontend:
 npm update
 ```
 
+> ⚠️ Setelah `npm update`, jalankan kembali `npm run dev` untuk memastikan tidak ada konflik versi baru (seperti kasus Vite di atas) yang muncul akibat update.
+
 ---
 
 # 🔍 Mengecek Route
@@ -267,13 +312,13 @@ php artisan make:middleware CheckRole
 - Jalankan `npm run build` sebelum deploy ke production.
 - Jangan menghapus file `manifest.json` hasil build production.
 - Simpan file `.env` dan jangan pernah mengunggahnya ke Git.
+- Jika `npm install` gagal dengan error `ERESOLVE`, lihat bagian **Troubleshooting** di langkah **Install Dependency**.
 
 ---
 
 # 👨‍💻 Kontributor
 
 Developed by **Teds**
-
 Feel free to fork, improve, dan berkontribusi.
 
 ---
